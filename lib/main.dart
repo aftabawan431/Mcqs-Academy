@@ -12,8 +12,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: SafeArea(
-        child: HomeScreen(),
+      child: HomeScreen(),
       ),
+      routes: {
+        '/a': (context)=>HomeScreen(),
+      },
     );
 
   }

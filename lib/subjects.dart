@@ -28,8 +28,17 @@ class _SubjectsState extends State<Subjects> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.black54,
-          title: Text(widget.id),
+          backgroundColor: Colors.white,
+          leading: IconButton(
+              icon: Icon(
+                Icons.arrow_back_ios,
+                size: 30,
+                color: Colors.black,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              }),
+          title: Text(widget.id,style: TextStyle(color: Colors.black,fontSize: 25),),
         ),
         body: Container(
           padding: EdgeInsets.symmetric(horizontal: 15),
@@ -54,7 +63,7 @@ class _SubjectsState extends State<Subjects> {
                             onTap: () {
 
                               if (widget.id.length >= 6) {
-                                Navigator.push(context, MaterialPageRoute(builder: (ctx)=>QuizScreen(id: "${widget.id}${subjects[index]}",)));
+                                Navigator.push(context, MaterialPageRoute(builder: (ctx)=>QuizScreen(id: "${widget.id}${subjects[index]}",reverseId:widget.id)));
                              List<Question> question;
                                print("${widget.id}${subjects[index]}");
                               } else {
