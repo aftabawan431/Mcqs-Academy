@@ -21,6 +21,12 @@ class QuestionsBrain{
   String getQuestionAnswer(){
     return questions[questionNo].answer;
   }
+  int getTotalQuestion(){
+    return questions.length;
+  }
+  int getCurrentQuestion(){
+    return questionNo;
+  }
   bool questionsEnded(){
     if(questionNo==questions.length-1){
       return true;

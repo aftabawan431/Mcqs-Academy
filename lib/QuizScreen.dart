@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mcqs_academy/QuestionsBrain.dart';
@@ -9,17 +11,21 @@ class QuizScreen extends StatefulWidget {
   final Function resetResetter;
 
   String id;
-  QuizScreen({this.id, this.resetResetter,this.result});
+  QuizScreen({this.id, this.resetResetter, this.result});
   @override
   _QuizScreenState createState() => _QuizScreenState();
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  var selectedItem;
+  bool result;
+  int selectedOption;
   bool option1;
   bool option2;
   bool option3;
   bool option4;
+  bool disabler = false;
+  bool _quizEnded=false;
+
   QuestionsBrain questionsBrain = QuestionsBrain();
   @override
   void initState() {
@@ -32,32 +38,56 @@ class _QuizScreenState extends State<QuizScreen> {
     questionsBrain.questions = collection.getList(widget.id);
     print(questionsBrain.questions);
   }
-  void resetAll() {
-    if (widget.ressetter == true) {
-      option1 = option2 = option3 = option4 = null;
+
+  void checkAnswer(String answer) {
+    if (disabler == false) {
+      if (questionsBrain.getQuestionAnswer() == answer) {
+        print("true");
+        setState(() {
+          disabler = true;
+          result = true;
+        });
+        Timer(Duration(seconds: 3),(){
+          resetAll();
+          setState(() {
+            if(questionsBrain.getCurrentQuestion()==questionsBrain.getTotalQuestion()-1){
+              print("Quiz ended");
+            }else{
+              questionsBrain.nextQuestion();
+            }
+          });
+
+        });
+      } else {
+        disabler = true;
+        result = false;
+        print("false");
+        Timer(Duration(seconds: 2),(){
+          resetAll();
+          setState(() {
+            if(questionsBrain.getCurrentQuestion()==questionsBrain.getTotalQuestion()-1){
+              print("QUiz ended");
+
+            }else{
+              questionsBrain.nextQuestion();
+            }
+          });
+
+        });
+      }
     }
+  }
+
+  void resetAll() {
+    setState(() {
+      selectedOption = null;
+      result = null;
+      disabler = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (selectedItem == 0 && widget.result != null) {
-      option1 = widget.result;
-    }
-    if (selectedItem == 1 && widget.result != null) {
-      option2 = widget.result;
-    }
-    if (selectedItem == 2 && widget.result != null) {
-      option3 = widget.result;
-    }
-    if (selectedItem == 3 && widget.result != null) {
-      option4 = widget.result;
-    }
-
-    if (widget.ressetter == true) {
-      resetAll();
-      widget.resetResetter();
-    }
-    
     return SafeArea(
         child: Scaffold(
       body: Container(
@@ -71,22 +101,40 @@ class _QuizScreenState extends State<QuizScreen> {
                 child: Padding(
                   padding: const EdgeInsets.only(
                       top: 50, left: 20, right: 20, bottom: 20),
-                  child: Container(
-                    height: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Colors.white,
-                    ),
-
-                    child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                      questionsBrain.getQuestionText(),
-                      style:
-                            TextStyle(fontWeight: FontWeight.bold, fontSize: 20,fontStyle: FontStyle.italic),
-                    ),
-                        )),
+                  child: Stack(
+                    alignment: AlignmentDirectional.center,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.only(top: 10,left: 25,right: 25),
+                        height: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.white,
+                        ),
+                        child: Column(
+                          children: [
+                            Text("Question ${questionsBrain.getCurrentQuestion()+1} of ${questionsBrain.getTotalQuestion()}"),
+                            Expanded(
+                              child: Center(
+                                child: Text(
+                                questionsBrain.getQuestionText(),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 25,
+                                  fontStyle: FontStyle.italic),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                   result==true||result==false? Container(
+                        child: CircleAvatar(
+                          radius: 80,
+                          child:  Image.asset(result?'assets/smile.png':"assets/sad.png"),
+                        )
+                      ):Container()
+                    ],
                   ),
                 ),
               ),
@@ -98,110 +146,191 @@ class _QuizScreenState extends State<QuizScreen> {
                   child: Container(
                     color: Colors.white.withOpacity(.8),
                     child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
                         Expanded(
                           // height: 80,
                           // color: Colors.white,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
 
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: (){
-                                    setState(() {
-                                    });
-                                  },
-                                  child: Container(
-                                    color: Colors.redAccent,
-
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.people_alt_rounded,
-                                          color: Colors.black,
-                                        ),
-                                        Center(
-                                          child: Text('Ask Friend', style: TextStyle(
-                                              fontWeight: FontWeight.bold, fontSize: 20),),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: (){
-                                    setState(() {
-                                questionsBrain.nextQuestion();
-                                    });
-                                  },
-                                  child: Container(
-                                    color: Colors.yellowAccent,
-                                    child: Center(
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 5.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {});
+                                    },
+                                    child: Container(
+                                      color: Colors.white,
                                       child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceAround,
                                         children: [
-                                          Text('Next', style: TextStyle(
-                                              fontWeight: FontWeight.bold, fontSize: 20),),
-                                          Icon(Icons.arrow_forward_ios_rounded)
+                                          Icon(
+                                            Icons.people_alt_rounded,
+                                            color: Colors.black,
+                                          ),
+                                          Center(
+                                            child: Text(
+                                              'Ask Friend',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 20),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
                                   ),
                                 ),
-                              )
-                            ],
+                                SizedBox(
+                                  width: 5,
+                                ),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      if(disabler==false){
+                                        resetAll();
+                                      setState(() {
+
+
+                                        if(questionsBrain.getCurrentQuestion()==questionsBrain.getTotalQuestion()-1){
+                                          print("QUiz ended");
+                                        }else{
+                                          questionsBrain.nextQuestion();
+                                        }
+                                      });
+                                        }
+
+                                    },
+                                    child: Container(
+                                      color: Colors.white,
+                                      child: Center(
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceAround,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              'Skip',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 20),
+                                            ),
+                                            Icon(
+                                                Icons.arrow_forward_ios_rounded)
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
                           ),
                         ),
                         SizedBox(
                           height: 4,
                         ),
-                        GestureDetector(
-                          onTap: (){
-                            setState(() {
+                        Card(
+                            child: ListTile(
+                                onTap: () {
+                                  setState(() {
+                                    selectedOption = 0;
+                                  });
+                                  checkAnswer(
+                                      questionsBrain.getQuestionOptions()[0]);
+                                },
+                                tileColor: result == true && selectedOption == 0
+                                    ? Colors.green
+                                    : result == false && selectedOption == 0
+                                        ? Colors.red
+                                        : Colors.transparent,
+                                title: Center(
+                                    child: Text(
+                                  questionsBrain.getQuestionOptions()[0],
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20),
+                                )))),
+                        Card(
+                            child: ListTile(
+                                onTap: () {
+                                  if (disabler == false) {
+                                    setState(() {
+                                      selectedOption = 1;
+                                    });
+                                    checkAnswer(
+                                        questionsBrain.getQuestionOptions()[1]);
+                                  }
+                                },
+                                tileColor: result == true && selectedOption == 1
+                                    ? Colors.green
+                                    : result == false && selectedOption == 1
+                                        ? Colors.red
+                                        : Colors.transparent,
+                                title: Center(
+                                    child: Text(
+                                  questionsBrain.getQuestionOptions()[1],
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20),
+                                )))),
+                        Card(
+                            child: ListTile(
+                                onTap: () {
+                                  if (disabler == false) {
+                                    setState(() {
+                                      selectedOption = 2;
+                                    });
+                                    checkAnswer(
+                                        questionsBrain.getQuestionOptions()[2]);
+                                  }
+                                },
+                                tileColor: result == true && selectedOption == 2
+                                    ? Colors.green
+                                    : result == false && selectedOption == 2
+                                        ? Colors.red
+                                        : Colors.transparent,
+                                title: Center(
+                                    child: Text(
+                                  questionsBrain.getQuestionOptions()[2],
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20),
+                                )))),
+                        Card(
+                            child: ListTile(
+                                onTap: () {
+                                  if (disabler == false) {
+                                    setState(() {
+                                      selectedOption = 3;
+                                    });
 
-                            });
-                          },
-                          child: Card(
-                              child: ListTile(
-                                  title: Center(
-                                      child: Text(
-                            questionsBrain.getQuestionOptions()[0],
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 20),
-                          )))),
-                        ),
-                        Card(
-                            child: ListTile(
+                                    checkAnswer(
+                                        questionsBrain.getQuestionOptions()[3]);
+                                  }
+                                },
+                                tileColor: result == true && selectedOption == 3
+                                    ? Colors.green
+                                    : result == false && selectedOption == 3
+                                        ? Colors.red
+                                        : Colors.transparent,
                                 title: Center(
                                     child: Text(
-                          questionsBrain.getQuestionOptions()[1],
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 20),
-                        )))),
-                        Card(
-                            child: ListTile(
-                                title: Center(
-                                    child: Text(
-                          questionsBrain.getQuestionOptions()[2],
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 20),
-                        )))),
-                        Card(
-                            child: ListTile(
-                                title: Center(
-                                    child: Text(
-                          questionsBrain.getQuestionOptions()[3],
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 20),
-                        )))),
+                                  questionsBrain.getQuestionOptions()[3],
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20),
+                                )))),
                       ],
                     ),
                   ))
-              ],
+            ],
           )),
     ));
   }
